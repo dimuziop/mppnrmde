@@ -61,7 +61,7 @@ services:
         - backend
     nginx:
       build:
-        context: ./nginx
+        context: ./.docker/nginx
         args:
           - PHP_UPSTREAM_CONTAINER=${NGINX_PHP_UPSTREAM_CONTAINER}
           - PHP_UPSTREAM_PORT=${NGINX_PHP_UPSTREAM_PORT}

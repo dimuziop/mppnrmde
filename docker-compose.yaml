@@ -1,0 +1,84 @@
+version: '3'
+
+networks:
+  backend:
+    driver: ${NETWORKS_DRIVER}
+  frontend:
+    driver: ${NETWORKS_DRIVER}
+
+services:
+    ### PHP-FPM ##############################################
+    php-fpm:
+      build:
+        context: ./.docker/php-fpm
+        args:
+          - PHP_VERSION=${PHP_VERSION}
+          - INSTALL_XDEBUG=${INSTALL_XDEBUG}
+          - INSTALL_PHPDBG=${INSTALL_PHPDBG}
+          - INSTALL_SOAP=${INSTALL_SOAP}
+          - INSTALL_XSL=${INSTALL_XSL}
+          - INSTALL_IMAP=${INSTALL_IMAP}
+          - INSTALL_MONGO=${INSTALL_MONGO}
+          - INSTALL_AMQP=${INSTALL_AMQP}
+          - INSTALL_MSSQL=${INSTALL_MSSQL}
+          - INSTALL_BCMATH=${INSTALL_BCMATH}
+          - INSTALL_GMP=${INSTALL_GMP}
+          - INSTALL_PHPREDIS=${INSTALL_PHPREDIS}
+          - INSTALL_MEMCACHED=${INSTALL_MEMCACHED}
+          - INSTALL_OPCACHE=${INSTALL_OPCACHE}
+          - INSTALL_EXIF=${INSTALL_EXIF}
+          - INSTALL_MYSQLI=${INSTALL_MYSQLI}
+          - INSTALL_PGSQL=${INSTALL_PGSQL}
+          - INSTALL_PG_CLIENT=${INSTALL_PG_CLIENT}
+          - INSTALL_POSTGIS=${INSTALL_POSTGIS}
+          - INSTALL_INTL=${INSTALL_INTL}
+          - INSTALL_GHOSTSCRIPT=${INSTALL_GHOSTSCRIPT}
+          - INSTALL_LDAP=${INSTALL_LDAP}
+          - INSTALL_IMAGE_OPTIMIZERS=${INSTALL_IMAGE_OPTIMIZERS}
+          - INSTALL_IMAGEMAGICK=${INSTALL_IMAGEMAGICK}
+          - INSTALL_CALENDAR=${INSTALL_CALENDAR}
+          - INSTALL_APCU=${INSTALL_APCU}
+          - INSTALL_YAML=${INSTALL_YAML}
+          - INSTALL_RDKAFKA=${INSTALL_RDKAFKA}
+          - INSTALL_MYSQL_CLIENT=${INSTALL_MYSQL_CLIENT}
+          - INSTALL_SSHPASS=${INSTALL_SSHPASS}
+          - INSTALL_FFMPEG=${INSTALL_FFMPEG}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      volumes:
+        - ./.docker/php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${APP_CODE_PATH_PACKAGES}:${APP_CODE_PATH_CONTAINER_PACKAGES}${APP_CODE_CONTAINER_FLAG}
+      expose:
+        - "9000"
+#      extra_hosts:
+#        - "dockerhost:${DOCKER_HOST_IP}"
+      environment:
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - DOCKER_HOST=tcp://docker-in-docker:2375
+      networks:
+        - backend
+    nginx:
+      build:
+        context: ./nginx
+        args:
+          - PHP_UPSTREAM_CONTAINER=${NGINX_PHP_UPSTREAM_CONTAINER}
+          - PHP_UPSTREAM_PORT=${NGINX_PHP_UPSTREAM_PORT}
+          - CHANGE_SOURCE=${CHANGE_SOURCE}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
+        - ${NGINX_SITES_PATH}:/etc/nginx/sites-available
+        - ${NGINX_SSL_PATH}:/etc/nginx/ssl
+      ports:
+        - "${NGINX_HOST_HTTP_PORT}:80"
+        - "${NGINX_HOST_HTTPS_PORT}:443"
+      depends_on:
+        - php-fpm
+      networks:
+        - frontend
+        - backend

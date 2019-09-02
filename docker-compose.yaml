@@ -50,6 +50,7 @@ services:
         - ./.docker/php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
         - ${APP_CODE_PATH_PACKAGES}:${APP_CODE_PATH_CONTAINER_PACKAGES}${APP_CODE_CONTAINER_FLAG}
+      user: "1000"
       expose:
         - "9000"
 #      extra_hosts:
@@ -83,7 +84,8 @@ services:
         - frontend
         - backend
     mongo:
-      build: ./.dcoker/mongo
+      build: ./.docker/mongo
+      user: "1000"
       ports:
         - "${MONGODB_PORT}:27017"
       volumes:
@@ -91,7 +93,8 @@ services:
       networks:
         - backend
     redis:
-      build: ./redis
+      build: ./.docker/redis
+      user: "1000"
       volumes:
         - ${DATA_PATH_HOST}/redis:/data
       ports:
@@ -100,6 +103,7 @@ services:
         - backend
     postgres:
       build: ./.docker/postgres
+      user: "1000"
       volumes:
         - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
         - ${POSTGRES_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
@@ -127,3 +131,14 @@ services:
         #- POSTGRES_CONFLUENCE_PASSWORD=${CONFLUENCE_POSTGRES_PASSWORD}
       networks:
         - backend
+    composer:
+      image: composer
+      user: "1000"
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${APP_CODE_PATH_PACKAGES}:${APP_CODE_PATH_CONTAINER_PACKAGES}${APP_CODE_CONTAINER_FLAG}
+      depends_on:
+        - php-fpm
+      networks:
+        - backend
+      command: tail -f /dev/null
